@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Quran Foundation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #1a1614;
+      --sand:   #f5efe6;
+      --gold:   #c8922a;
+      --teal:   #1d5c63;
+      --cream:  #faf6ef;
+      --border: rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--teal);
+      padding: 0 32px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-family: 'Amiri', serif;
+      font-size: 20px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-pill {
+      background: rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 5px 14px 5px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+    }
+
+    .user-pill .avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--gold);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    .page-title {
+      font-family: 'Amiri', serif;
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .page-sub {
+      font-size: 14px;
+      color: #7a726c;
+      margin-bottom: 36px;
+    }
+
+    /* ── Identity card ── */
+    .identity-card {
+      background: var(--teal);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .identity-card::after {
+      content: '☽';
+      position: absolute;
+      right: 32px;
+      font-size: 80px;
+      opacity: 0.07;
+      line-height: 1;
+    }
+
+    .id-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--gold);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .id-info { flex: 1; }
+
+    .id-name {
+      font-family: 'Amiri', serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .id-email {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+
+    .id-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      opacity: 0.55;
+      word-break: break-all;
+    }
+
+    .id-sub strong { opacity: 1; margin-right: 6px; }
+
+    /* ── API grid ── */
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .api-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .api-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .api-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scope-badge {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(200,146,42,0.1);
+      color: var(--gold);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .api-result {
+      background: #f8f5f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: #5a504a;
+      min-height: 60px;
+      max-height: 140px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .api-result.loading { color: #b0a89e; font-style: italic; }
+    .api-result.error { color: #c0392b; background: #fdf0f0; }
+
+    .btn-fetch {
+      padding: 8px 16px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+    .btn-fetch:hover { background: #174950; }
+    .btn-fetch:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Flow info ── */
+    .flow-info {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+    }
+
+    .flow-info h3 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #8a7f78;
+      margin-bottom: 16px;
+    }
+
+    .token-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .token-row:last-child { border-bottom: none; }
+
+    .token-label {
+      min-width: 120px;
+      font-weight: 500;
+      color: #6b6460;
+    }
+
+    .token-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--ink);
+      word-break: break-all;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: #27ae60;
+      font-weight: 500;
+    }
+
+    @media (max-width: 640px) {
+      main { padding: 24px 16px; }
+      nav { padding: 0 16px; }
+      .identity-card { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-brand">☽ Quran Foundation</div>
+    <div class="nav-right">
+      <div class="user-pill">
+        <div class="avatar" id="navAvatar">?</div>
+        <span id="navName">Loading…</span>
+      </div>
+      <form action="/auth/logout" method="POST">
+        <button type="submit" class="btn-sm btn-ghost">Sign out</button>
+      </form>
+    </div>
+  </nav>
+
+  <main>
+    <h1 class="page-title">User APIs Dashboard</h1>
+    <p class="page-sub">You are authenticated. Access tokens are stored server-side only.</p>
+
+    <!-- Identity card -->
+    <div class="identity-card">
+      <div class="id-avatar" id="avatarLarge">?</div>
+      <div class="id-info">
+        <div class="id-name" id="userName">Loading user…</div>
+        <div class="id-email" id="userEmail"></div>
+        <div class="id-sub"><strong>sub</strong><span id="userSub">—</span></div>
+      </div>
+    </div>
+
+    <!-- API cards -->
+    <div class="api-grid">
+
+      <div class="api-card">
+        <div class="api-card-header">
+          <div class="api-card-title">📖 Bookmarks <span class="scope-badge">bookmark</span></div>
+        </div>
+        <div class="api-result loading" id="r-bookmarks">Press Fetch to load…</div>
+        <button class="btn-fetch" onclick="fetchApi('/api/user/bookmarks', 'bookmarks')">Fetch</button>
+      </div>
+
+      <div class="api-card">
+        <div class="api-card-header">
+          <div class="api-card-title">📚 Collections <span class="scope-badge">collection</span></div>
+        </div>
+        <div class="api-result loading" id="r-collections">Press Fetch to load…</div>
+        <button class="btn-fetch" onclick="fetchApi('/api/user/collections', 'collections')">Fetch</button>
+      </div>
+
+      <div class="api-card">
+        <div class="api-card-header">
+          <div class="api-card-title">⚙️ Preferences <span class="scope-badge">preference</span></div>
+        </div>
+        <div class="api-result loading" id="r-preferences">Press Fetch to load…</div>
+        <button class="btn-fetch" onclick="fetchApi('/api/user/preferences', 'preferences')">Fetch</button>
+      </div>
+
+      <div class="api-card">
+        <div class="api-card-header">
+          <div class="api-card-title">📈 Reading Sessions <span class="scope-badge">reading_session</span></div>
+        </div>
+        <div class="api-result loading" id="r-reading-sessions">Press Fetch to load…</div>
+        <button class="btn-fetch" onclick="fetchApi('/api/user/reading-sessions', 'reading-sessions')">Fetch</button>
+      </div>
+
+    </div>
+
+    <!-- Flow info -->
+    <div class="flow-info">
+      <h3>Authentication Flow Verified</h3>
+
+      <div class="token-row">
+        <span class="token-label">PKCE</span>
+        <span class="check">✓ code_verifier generated + code_challenge sent</span>
+      </div>
+      <div class="token-row">
+        <span class="token-label">state</span>
+        <span class="check">✓ validated on callback (CSRF protection)</span>
+      </div>
+      <div class="token-row">
+        <span class="token-label">nonce</span>
+        <span class="check">✓ validated in id_token (replay protection)</span>
+      </div>
+      <div class="token-row">
+        <span class="token-label">CLIENT_SECRET</span>
+        <span class="check">✓ kept server-side only — never sent to browser</span>
+      </div>
+      <div class="token-row">
+        <span class="token-label">Token exchange</span>
+        <span class="check">✓ performed on backend via /oauth2/token</span>
+      </div>
+      <div class="token-row">
+        <span class="token-label">access_token</span>
+        <span class="check">✓ stored in httpOnly session cookie</span>
+      </div>
+      <div class="token-row">
+        <span class="token-label">id_token sub</span>
+        <span class="token-val" id="subDisplay">—</span>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // Load identity
+    fetch('/auth/me')
+      .then(r => r.json())
+      .then(({ user }) => {
+        if (!user) return;
+        const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'User';
+        const initial = (name[0] || '?').toUpperCase();
+
+        document.getElementById('navAvatar').textContent = initial;
+        document.getElementById('avatarLarge').textContent = initial;
+        document.getElementById('navName').textContent = name;
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userEmail').textContent = user.email || '';
+        document.getElementById('userSub').textContent = user.sub || '—';
+        document.getElementById('subDisplay').textContent = user.sub || '—';
+      })
+      .catch(() => {
+        document.getElementById('navName').textContent = 'Unknown';
+      });
+
+    async function fetchApi(path, key) {
+      const el = document.getElementById('r-' + key);
+      el.className = 'api-result loading';
+      el.textContent = 'Fetching…';
+      try {
+        const r = await fetch(path);
+        const data = await r.json();
+        el.className = r.ok ? 'api-result' : 'api-result error';
+        el.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        el.className = 'api-result error';
+        el.textContent = 'Network error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

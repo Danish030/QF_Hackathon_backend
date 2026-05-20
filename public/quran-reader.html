@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quran Reader – Font Rendering Demo</title>
+
+  <!-- Preload Unicode fallback font immediately -->
+  <link rel="preload"
+    href="https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2"
+    as="font" type="font/woff2" crossorigin/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ── Reset & tokens ─────────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#faf6ef; --surface:#fff; --ink:#1a1614;
+      --gold:#c8922a; --teal:#1d5c63; --border:rgba(0,0,0,.08);
+      --muted:#7a726c; --r:12px;
+      --font-size:28px; --line-height:2.6;
+    }
+    body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;transition:background .3s,color .3s}
+
+    /* ── Themes ─────────────────────────────────────────────────── */
+    body.dark{--bg:#0f0e0c;--surface:#1c1a17;--ink:#e8ddd0;--border:rgba(255,255,255,.1);--muted:#a09890}
+    body.sepia{--bg:#f4ecd8;--surface:#ede3cb;--ink:#3b2a14;--muted:#7a6548}
+
+    /* ── Unicode font ───────────────────────────────────────────── */
+    @font-face{
+      font-family:'UthmanicHafs';
+      src:url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2'),
+          url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.ttf') format('truetype');
+      font-display:swap;
+    }
+    @font-face{
+      font-family:'IndoPak';
+      src:url('https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2') format('woff2');
+      font-display:swap;
+    }
+
+    /* ── Nav ────────────────────────────────────────────────────── */
+    nav{background:var(--teal);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .nav-brand{font-family:'UthmanicHafs',serif;font-size:20px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-links{display:flex;gap:6px}
+    .nav-btn{padding:5px 12px;border-radius:6px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-size:12px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none}
+    .nav-btn:hover{background:rgba(255,255,255,.22)}
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .layout{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 54px)}
+
+    /* ── Controls sidebar ───────────────────────────────────────── */
+    .controls{background:var(--surface);border-left:1px solid var(--border);padding:20px 16px;overflow-y:auto;position:sticky;top:54px;max-height:calc(100vh - 54px)}
+    .ctrl-section{margin-bottom:20px}
+    .ctrl-heading{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .ctrl-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+    .ctrl-label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+    select,input[type=number],input[type=range]{
+      width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;
+      font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);
+      background:var(--bg);outline:none;transition:border-color .15s;
+    }
+    select:focus,input:focus{border-color:var(--gold)}
+    input[type=range]{padding:4px 0;cursor:pointer}
+    .range-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);text-align:center;margin-top:2px}
+
+    /* ── Chip groups ─────────────────────────────────────────────── */
+    .chip-group{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{padding:5px 12px;border-radius:999px;border:1.5px solid var(--border);font-size:12px;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s;font-family:'DM Sans',sans-serif}
+    .chip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+    .chip-theme{padding:5px 12px;border-radius:999px;border:1.5px solid var(--border);font-size:12px;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s;font-family:'DM Sans',sans-serif}
+    .chip-theme.active{border-color:var(--gold);color:var(--gold)}
+
+    /* ── Toggle ─────────────────────────────────────────────────── */
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+    .toggle-label{font-size:13px;color:var(--ink)}
+    .toggle{position:relative;width:38px;height:22px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;inset:0;border-radius:999px;background:#ccc;cursor:pointer;transition:.2s}
+    .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;border-radius:50%;background:#fff;transition:.2s}
+    .toggle input:checked+.toggle-slider{background:var(--teal)}
+    .toggle input:checked+.toggle-slider::before{transform:translateX(16px)}
+
+    /* ── Fetch button ───────────────────────────────────────────── */
+    .btn-fetch{width:100%;padding:11px;background:var(--teal);color:#fff;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;transition:background .15s}
+    .btn-fetch:hover{background:#164549}
+    .btn-fetch:disabled{opacity:.5;cursor:not-allowed}
+    .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+    .btn-fetch.loading .spinner{display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Status bar ─────────────────────────────────────────────── */
+    .status-bar{padding:8px 20px;background:rgba(29,92,99,.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;min-height:32px}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0}
+    .status-dot.loading{background:#e8b84b;animation:pulse 1s infinite}
+    .status-dot.ok{background:#27ae60}
+    .status-dot.err{background:#c0392b}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ── Reader area ─────────────────────────────────────────────── */
+    .reader{min-height:calc(100vh - 54px);padding:32px 48px;overflow-y:auto;direction:rtl}
+
+    /* ── Chapter title ───────────────────────────────────────────── */
+    .chapter-header{text-align:center;margin-bottom:32px;direction:rtl}
+    .chapter-name-arabic{font-family:'UthmanicHafs',serif;font-size:40px;color:var(--teal);display:block;margin-bottom:4px}
+    .chapter-name-en{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--muted);direction:ltr;text-align:center}
+    .bismillah{font-family:'UthmanicHafs',serif;font-size:32px;color:var(--ink);text-align:center;direction:rtl;margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid var(--border)}
+
+    /* ── Reading view (Mushaf layout) ───────────────────────────── */
+    .mushaf-page{margin-bottom:40px}
+    .mushaf-page-header{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);text-align:center;direction:ltr;margin-bottom:12px;letter-spacing:.06em;text-transform:uppercase}
+    .mushaf-line{
+      display:flex;justify-content:center;align-items:baseline;
+      direction:rtl;font-size:var(--font-size);line-height:var(--line-height);
+      flex-wrap:wrap;
+    }
+    .qword{
+      display:inline-block;cursor:pointer;padding:0 3px;border-radius:4px;
+      transition:background .15s;position:relative;
+    }
+    .qword:hover{background:rgba(200,146,42,.12)}
+    .qword.highlighted{background:rgba(200,146,42,.25)}
+    .qword.end-marker{font-family:'UthmanicHafs','Traditional Arabic',serif!important;font-size:.75em;color:var(--muted)}
+
+    /* ── Translation view ────────────────────────────────────────── */
+    .verse-block{margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid var(--border)}
+    .verse-block:last-child{border-bottom:none}
+    .verse-arabic-line{font-size:var(--font-size);line-height:var(--line-height);direction:rtl;text-align:right;margin-bottom:12px}
+    .verse-num-badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:28px;height:28px;border-radius:50%;border:1.5px solid var(--gold);
+      font-family:'DM Sans',sans-serif;font-size:11px;color:var(--gold);
+      margin-right:8px;direction:ltr;vertical-align:middle;flex-shrink:0;
+    }
+    .verse-translation{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--muted);line-height:1.8;direction:ltr;text-align:left;margin-top:10px;padding-right:0}
+    .verse-translation sup[foot_note]{cursor:pointer;color:var(--gold);font-size:.75em}
+
+    /* ── Word tooltip ─────────────────────────────────────────────── */
+    .word-tooltip{
+      position:fixed;z-index:200;background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.15);
+      font-family:'DM Sans',sans-serif;font-size:13px;direction:ltr;text-align:left;
+      max-width:220px;pointer-events:none;opacity:0;transition:opacity .15s;
+    }
+    .word-tooltip.visible{opacity:1}
+    .tooltip-arabic{font-family:'UthmanicHafs',serif;font-size:22px;direction:rtl;text-align:right;margin-bottom:4px}
+    .tooltip-trans{color:var(--muted);font-size:12px}
+    .tooltip-translit{color:var(--gold);font-size:11px;font-style:italic}
+
+    /* ── Audio player ─────────────────────────────────────────────── */
+    .audio-bar{background:var(--surface);border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;direction:ltr;position:sticky;bottom:0}
+    .audio-bar audio{flex:1;height:32px}
+    .audio-label{font-size:12px;color:var(--muted);white-space:nowrap}
+
+    /* ── Footnote popup ──────────────────────────────────────────── */
+    .footnote-popup{
+      position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+      background:var(--surface);border:1px solid var(--border);border-radius:10px;
+      padding:14px 18px;box-shadow:0 8px 30px rgba(0,0,0,.18);
+      max-width:440px;width:90%;z-index:300;direction:ltr;
+      font-size:13px;line-height:1.6;color:var(--ink);display:none;
+    }
+    .footnote-popup.visible{display:block}
+    .footnote-close{float:right;cursor:pointer;color:var(--muted);font-size:16px;line-height:1}
+
+    /* ── Empty state ─────────────────────────────────────────────── */
+    .empty-state{padding:80px 20px;text-align:center;direction:ltr}
+    .empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+    .empty-text{font-size:14px;color:var(--muted)}
+
+    /* ── Loading skeleton ─────────────────────────────────────────── */
+    .skeleton{background:linear-gradient(90deg,var(--border) 25%,rgba(0,0,0,.04) 50%,var(--border) 75%);background-size:400% 100%;animation:shimmer 1.2s infinite;border-radius:6px;height:32px;margin-bottom:12px}
+    @keyframes shimmer{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+    /* ── Font scale utility ─────────────────────────────────────── */
+    .scale-1{--font-size:4vw;--line-height:2.2}
+    .scale-2{--font-size:5vw;--line-height:2.3}
+    .scale-3{--font-size:28px;--line-height:2.6}
+    .scale-4{--font-size:36px;--line-height:2.8}
+    .scale-5{--font-size:46px;--line-height:3}
+    @media(min-width:768px){
+      .scale-1{--font-size:2.9vh}
+      .scale-2{--font-size:3.1vh}
+      .scale-3{--font-size:3.2vh}
+      .scale-4{--font-size:3.7vh}
+      .scale-5{--font-size:5vh}
+    }
+
+    /* ── IndoPak specific ────────────────────────────────────────── */
+    .script-indopak .qword,.script-indopak .verse-arabic-line{font-family:'IndoPak','Noto Nastaliq Urdu',serif!important}
+    .script-uthmani .qword:not(.end-marker),.script-uthmani .verse-arabic-line{font-family:'UthmanicHafs','Traditional Arabic',serif!important}
+
+    /* ── Tajweed palette ─────────────────────────────────────────── */
+    .theme-light .qword[data-v4]{font-palette:--TajweedLight}
+    .theme-dark  .qword[data-v4]{font-palette:--TajweedDark}
+    .theme-sepia .qword[data-v4]{font-palette:--TajweedSepia}
+
+    @media(max-width:768px){
+      .layout{grid-template-columns:1fr}
+      .controls{position:static;max-height:none;border-left:none;border-bottom:1px solid var(--border)}
+      .reader{padding:20px 16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="/">☽ Quran Reader</a>
+  <div class="nav-links">
+    <a class="nav-btn" href="/content-explorer.html">API Explorer</a>
+    <a class="nav-btn" href="/dashboard">User APIs</a>
+  </div>
+</nav>
+
+<!-- Word tooltip -->
+<div class="word-tooltip" id="tooltip">
+  <div class="tooltip-arabic" id="tt-arabic"></div>
+  <div class="tooltip-trans" id="tt-trans"></div>
+  <div class="tooltip-translit" id="tt-translit"></div>
+</div>
+
+<!-- Footnote popup -->
+<div class="footnote-popup" id="fnPopup">
+  <span class="footnote-close" onclick="closeFn()">✕</span>
+  <div id="fnText"></div>
+</div>
+
+<div class="layout">
+
+  <!-- Controls (LTR) -->
+  <aside class="controls" dir="ltr">
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">Surah</div>
+      <div class="ctrl-row">
+        <label class="ctrl-label">Chapter (1–114)</label>
+        <select id="chapterSel"></select>
+      </div>
+      <div class="ctrl-row">
+        <label class="ctrl-label">Per page (max 50)</label>
+        <input type="number" id="perPage" value="50" min="1" max="50"/>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">Script / Font</div>
+      <div class="chip-group" id="scriptChips">
+        <button class="chip active" data-script="qcf_v2">QCF V2 ✦ Mushaf</button>
+        <button class="chip" data-script="qcf_v4">QCF V4 Tajweed</button>
+        <button class="chip" data-script="uthmani">Uthmani</button>
+        <button class="chip" data-script="indopak">IndoPak</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">View Mode</div>
+      <div class="chip-group" id="viewChips">
+        <button class="chip active" data-view="translation">Translation</button>
+        <button class="chip" data-view="reading">Reading (Mushaf)</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">Theme</div>
+      <div class="chip-group">
+        <button class="chip-theme active" data-theme="light">☀ Light</button>
+        <button class="chip-theme" data-theme="sepia">📜 Sepia</button>
+        <button class="chip-theme" data-theme="dark">🌙 Dark</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">Font Scale</div>
+      <input type="range" id="scaleRange" min="1" max="5" step="1" value="3"/>
+      <div class="range-val" id="scaleVal">3 / 5</div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">Translation</div>
+      <div class="ctrl-row">
+        <select id="translationSel">
+          <option value="">None</option>
+          <option value="131" selected>Sahih International (131)</option>
+          <option value="95">Muhsin Khan (95)</option>
+          <option value="85">Pickthall (85)</option>
+          <option value="203">Dr. Mustafa Khattab (203)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-heading">Options</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Word-by-word</span>
+        <label class="toggle">
+          <input type="checkbox" id="wbwToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Audio player</span>
+        <label class="toggle">
+          <input type="checkbox" id="audioToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-fetch" id="fetchBtn" onclick="loadChapter()">
+      <div class="spinner"></div>
+      <span>Load Chapter</span>
+    </button>
+
+  </aside>
+
+  <!-- Reader -->
+  <div style="display:flex;flex-direction:column;overflow:hidden">
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Select a chapter and click Load.</span>
+    </div>
+
+    <main class="reader scale-3" id="reader">
+      <div class="empty-state">
+        <div class="empty-icon">☽</div>
+        <div class="empty-text">Select a Surah and click "Load Chapter"</div>
+      </div>
+    </main>
+
+    <div class="audio-bar" id="audioBar" style="display:none" dir="ltr">
+      <span class="audio-label" id="audioLabel">Audio</span>
+      <audio id="audioPlayer" controls preload="none"></audio>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+// ── Constants ────────────────────────────────────────────────────
+const CDN   = 'https://verses.quran.foundation';
+const API   = 'http://localhost:3000/api/content'; // backend proxy
+
+// ── Font cache ───────────────────────────────────────────────────
+const loadedFonts = new Set();
+
+// ── State ────────────────────────────────────────────────────────
+let state = {
+  script:      'qcf_v2',
+  view:        'translation',
+  theme:       'light',
+  scale:       3,
+  translation: '131',
+  wbw:         true,
+  audio:       true,
+  chapter:     1,
+  verses:      [],
+  chapterMeta: null,
+};
+
+// ── Chapter selector ─────────────────────────────────────────────
+const CHAPTER_NAMES = [
+  '','Al-Fatihah','Al-Baqarah','Ali \'Imran','An-Nisa','Al-Ma\'idah','Al-An\'am','Al-A\'raf',
+  'Al-Anfal','At-Tawbah','Yunus','Hud','Yusuf','Ar-Ra\'d','Ibrahim','Al-Hijr','An-Nahl',
+  'Al-Isra','Al-Kahf','Maryam','Ta-Ha','Al-Anbya','Al-Hajj','Al-Mu\'minun','An-Nur',
+  'Al-Furqan','Ash-Shu\'ara','An-Naml','Al-Qasas','Al-Ankabut','Ar-Rum','Luqman','As-Sajdah',
+  'Al-Ahzab','Saba','Fatir','Ya-Sin','As-Saffat','Sad','Az-Zumar','Ghafir','Fussilat',
+  'Ash-Shura','Az-Zukhruf','Ad-Dukhan','Al-Jathiyah','Al-Ahqaf','Muhammad','Al-Fath',
+  'Al-Hujurat','Qaf','Adh-Dhariyat','At-Tur','An-Najm','Al-Qamar','Ar-Rahman','Al-Waqi\'ah',
+  'Al-Hadid','Al-Mujadila','Al-Hashr','Al-Mumtahanah','As-Saf','Al-Jumu\'ah','Al-Munafiqun',
+  'At-Taghabun','At-Talaq','At-Tahrim','Al-Mulk','Al-Qalam','Al-Haqqah','Al-Ma\'arij',
+  'Nuh','Al-Jinn','Al-Muzzammil','Al-Muddaththir','Al-Qiyamah','Al-Insan','Al-Mursalat',
+  'An-Naba','An-Nazi\'at','Abasa','At-Takwir','Al-Infitar','Al-Mutaffifin','Al-Inshiqaq',
+  'Al-Buruj','At-Tariq','Al-A\'la','Al-Ghashiyah','Al-Fajr','Al-Balad','Ash-Shams',
+  'Al-Layl','Ad-Duha','Ash-Sharh','At-Tin','Al-\'Alaq','Al-Qadr','Al-Bayyinah',
+  'Az-Zalzalah','Al-\'Adiyat','Al-Qari\'ah','At-Takathur','Al-\'Asr','Al-Humazah',
+  'Al-Fil','Quraysh','Al-Ma\'un','Al-Kawthar','Al-Kafirun','An-Nasr','Al-Masad',
+  'Al-Ikhlas','Al-Falaq','An-Nas'
+];
+
+(function populateChapters(){
+  const sel = document.getElementById('chapterSel');
+  for(let i=1;i<=114;i++){
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${i}. ${CHAPTER_NAMES[i]}`;
+    sel.appendChild(o);
+  }
+  sel.value = 1;
+})();
+
+// ── Chip interactions ─────────────────────────────────────────────
+document.getElementById('scriptChips').addEventListener('click', e => {
+  const btn = e.target.closest('[data-script]');
+  if(!btn) return;
+  document.querySelectorAll('#scriptChips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  state.script = btn.dataset.script;
+});
+
+document.getElementById('viewChips').addEventListener('click', e => {
+  const btn = e.target.closest('[data-view]');
+  if(!btn) return;
+  document.querySelectorAll('#viewChips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  state.view = btn.dataset.view;
+});
+
+document.querySelectorAll('.chip-theme').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chip-theme').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    applyTheme(btn.dataset.theme);
+  });
+});
+
+function applyTheme(theme) {
+  state.theme = theme;
+  document.body.className = theme === 'light' ? '' : theme;
+  // Re-apply Tajweed palette classes
+  document.getElementById('reader').className =
+    `reader scale-${state.scale} theme-${theme} ${scriptClass()}`;
+}
+
+document.getElementById('scaleRange').addEventListener('input', function(){
+  state.scale = Number(this.value);
+  document.getElementById('scaleVal').textContent = `${state.scale} / 5`;
+  const reader = document.getElementById('reader');
+  reader.className = `reader scale-${state.scale} theme-${state.theme} ${scriptClass()}`;
+});
+
+document.getElementById('translationSel').addEventListener('change', function(){
+  state.translation = this.value;
+});
+
+document.getElementById('wbwToggle').addEventListener('change', function(){
+  state.wbw = this.checked;
+});
+
+document.getElementById('audioToggle').addEventListener('change', function(){
+  state.audio = this.checked;
+  document.getElementById('audioBar').style.display = this.checked && state.verses.length ? 'flex' : 'none';
+});
+
+function scriptClass(){
+  if(state.script==='indopak') return 'script-indopak';
+  if(state.script==='uthmani') return 'script-uthmani';
+  return '';
+}
+
+// ── Font loading ──────────────────────────────────────────────────
+async function loadQcfFont(page, version='v2') {
+  const fontName = `p${page}-${version}`;
+  if(loadedFonts.has(fontName)) return fontName;
+
+  // Firefox dark mode: use OT-SVG for Tajweed V4
+  const isFF = navigator.userAgent.includes('Firefox');
+  let url;
+  if(version==='v4'){
+    if(isFF && state.theme==='dark'){
+      url = `${CDN}/fonts/quran/hafs/v4/ot-svg/dark/woff2/p${page}.woff2`;
+    } else {
+      url = `${CDN}/fonts/quran/hafs/v4/colrv1/woff2/p${page}.woff2`;
+    }
+  } else {
+    url = `${CDN}/fonts/quran/hafs/${version}/woff2/p${page}.woff2`;
+  }
+
+  try {
+    const ff = new FontFace(fontName, `url('${url}')`);
+    ff.display = 'block';
+    await ff.load();
+    document.fonts.add(ff);
+    loadedFonts.add(fontName);
+
+    // Tajweed: inject palette CSS once per font
+    if(version==='v4') injectTajweedPalette(fontName);
+  } catch(e) {
+    console.warn(`Font load failed p${page}-${version}:`, e);
+  }
+  return fontName;
+}
+
+function injectTajweedPalette(fontFamily){
+  if(document.getElementById(`palette-${fontFamily}`)) return;
+  const s = document.createElement('style');
+  s.id = `palette-${fontFamily}`;
+  s.textContent = `
+    @font-palette-values --TajweedLight { font-family:'${fontFamily}'; base-palette:0; }
+    @font-palette-values --TajweedDark  { font-family:'${fontFamily}'; base-palette:1; }
+    @font-palette-values --TajweedSepia { font-family:'${fontFamily}'; base-palette:2; }
+  `;
+  document.head.appendChild(s);
+}
+
+// ── Main load ─────────────────────────────────────────────────────
+async function loadChapter() {
+  const chapter = Number(document.getElementById('chapterSel').value);
+  const perPage = Number(document.getElementById('perPage').value) || 50;
+  state.chapter = chapter;
+
+  const btn = document.getElementById('fetchBtn');
+  btn.disabled = true; btn.classList.add('loading');
+  setStatus('loading', `Loading Surah ${chapter} – ${CHAPTER_NAMES[chapter]}…`);
+
+  const reader = document.getElementById('reader');
+  reader.innerHTML = Array(5).fill('<div class="skeleton"></div>').join('');
+
+  try {
+    // 1 — Fetch chapter metadata
+    const metaRes = await fetch(`${API}/chapters/${chapter}`);
+    state.chapterMeta = (await metaRes.json()).chapter || null;
+
+    // 2 — Build verse fetch URL
+    const scriptConfig = SCRIPT_CONFIG[state.script];
+    const params = new URLSearchParams({
+      words:       'true',
+      word_fields: scriptConfig.wordFields,
+      mushaf:      scriptConfig.mushaf,
+      per_page:    perPage,
+      page:        1,
+    });
+    if(state.translation) params.set('translations', state.translation);
+
+    const vRes = await fetch(`${API}/verses/by_chapter/${chapter}?${params}`);
+    const vData = await vRes.json();
+    state.verses = vData.verses || [];
+
+    if(!state.verses.length){
+      setStatus('err','No verses returned. Check your credentials.');
+      reader.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-text">No verses returned. Check API credentials and network.</div></div>';
+      return;
+    }
+
+    // 3 — Collect page numbers and start font loading
+    const pages = new Set(state.verses.flatMap(v => v.words.map(w=>w.page_number).filter(Boolean)));
+    const version = state.script === 'qcf_v4' ? 'v4' : 'v2';
+    const fontPromises = (scriptConfig.type==='qcf')
+      ? [...pages].map(p => loadQcfFont(p, version))
+      : Promise.resolve([]);
+
+    // 4 — Render immediately with fallback text
+    renderChapter(state.verses, false);
+    setStatus('loading', `Fonts loading for ${pages.size} page(s)…`);
+
+    // 5 — When fonts ready, re-render with QCF glyphs
+    await fontPromises;
+    if(scriptConfig.type==='qcf'){
+      renderChapter(state.verses, true);
+    }
+
+    // 6 — Audio
+    if(state.audio) await loadAudio(chapter);
+
+    setStatus('ok', `Surah ${chapter} · ${state.verses.length} verses · ${pages.size} page(s)`);
+
+  } catch(e) {
+    console.error(e);
+    setStatus('err', 'Error: ' + e.message);
+    reader.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-text">${e.message}</div></div>`;
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading');
+  }
+}
+
+// ── Script config ─────────────────────────────────────────────────
+const SCRIPT_CONFIG = {
+  qcf_v2:   { type:'qcf',     wordFields:'code_v2,text_qpc_hafs,line_number,page_number', mushaf:1,  glyphField:'code_v2',     fallbackField:'text_qpc_hafs' },
+  qcf_v4:   { type:'qcf',     wordFields:'code_v2,text_qpc_hafs,line_number,page_number', mushaf:19, glyphField:'code_v2',     fallbackField:'text_qpc_hafs' },
+  uthmani:  { type:'unicode', wordFields:'text_uthmani,text_qpc_hafs',                    mushaf:4,  glyphField:'text_uthmani',fallbackField:'text_uthmani'   },
+  indopak:  { type:'unicode', wordFields:'text_indopak,text_qpc_hafs',                    mushaf:3,  glyphField:'text_indopak', fallbackField:'text_indopak'  },
+};
+
+// ── Render ────────────────────────────────────────────────────────
+function renderChapter(verses, fontsReady){
+  const reader = document.getElementById('reader');
+  reader.className = `reader scale-${state.scale} theme-${state.theme} ${scriptClass()}`;
+  reader.innerHTML = '';
+
+  const cfg = SCRIPT_CONFIG[state.script];
+
+  // Chapter header
+  if(state.chapterMeta){
+    const hdr = document.createElement('div');
+    hdr.className = 'chapter-header';
+    hdr.innerHTML = `
+      <span class="chapter-name-arabic">${state.chapterMeta.name_arabic || ''}</span>
+      <span class="chapter-name-en">${state.chapterMeta.translated_name?.name || ''} · Surah ${state.chapter}</span>
+    `;
+    reader.appendChild(hdr);
+
+    // Bismillah (all chapters except At-Tawbah ch 9 and Al-Fatiha ch 1 where it's verse 1)
+    if(state.chapter !== 9 && state.chapter !== 1){
+      const bism = document.createElement('div');
+      bism.className = 'bismillah';
+      bism.style.fontFamily = cfg.type==='qcf' ? `'UthmanicHafs',serif` : (state.script==='indopak' ? `'IndoPak',serif` : `'UthmanicHafs',serif`);
+      bism.textContent = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
+      reader.appendChild(bism);
+    }
+  }
+
+  if(state.view === 'reading'){
+    renderReadingView(reader, verses, cfg, fontsReady);
+  } else {
+    renderTranslationView(reader, verses, cfg, fontsReady);
+  }
+}
+
+// ── Reading view (line-grouped Mushaf layout) ─────────────────────
+function renderReadingView(container, verses, cfg, fontsReady){
+  // Group all words by line
+  const lineMap = new Map();
+  verses.forEach(verse => {
+    (verse.words || []).forEach(word => {
+      const key = `${word.page_number}-${word.line_number}`;
+      if(!lineMap.has(key)) lineMap.set(key, []);
+      lineMap.get(key).push({ ...word, verseKey: verse.verse_key });
+    });
+  });
+
+  // Sort lines by page then line number
+  const sortedKeys = [...lineMap.keys()].sort((a,b) => {
+    const [pa,la] = a.split('-').map(Number);
+    const [pb,lb] = b.split('-').map(Number);
+    return pa !== pb ? pa-pb : la-lb;
+  });
+
+  let currentPage = null;
+  let pageDiv = null;
+
+  sortedKeys.forEach(key => {
+    const [pageNum] = key.split('-').map(Number);
+    if(pageNum !== currentPage){
+      currentPage = pageNum;
+      pageDiv = document.createElement('div');
+      pageDiv.className = 'mushaf-page';
+      const ph = document.createElement('div');
+      ph.className = 'mushaf-page-header';
+      ph.textContent = `Page ${pageNum}`;
+      pageDiv.appendChild(ph);
+      container.appendChild(pageDiv);
+    }
+
+    const lineDiv = document.createElement('div');
+    lineDiv.className = 'mushaf-line';
+    lineMap.get(key).forEach(word => {
+      lineDiv.appendChild(makeWordSpan(word, cfg, fontsReady));
+    });
+    pageDiv.appendChild(lineDiv);
+  });
+}
+
+// ── Translation view (verse-by-verse) ────────────────────────────
+function renderTranslationView(container, verses, cfg, fontsReady){
+  verses.forEach(verse => {
+    const block = document.createElement('div');
+    block.className = 'verse-block';
+
+    // Arabic line
+    const arabicLine = document.createElement('div');
+    arabicLine.className = 'verse-arabic-line';
+
+    const numBadge = document.createElement('span');
+    numBadge.className = 'verse-num-badge';
+    numBadge.textContent = verse.verse_number;
+
+    const wordsSpan = document.createElement('span');
+    (verse.words||[]).forEach(word => {
+      wordsSpan.appendChild(makeWordSpan({ ...word, verseKey: verse.verse_key }, cfg, fontsReady));
+      wordsSpan.appendChild(document.createTextNode(' '));
+    });
+
+    arabicLine.appendChild(numBadge);
+    arabicLine.appendChild(wordsSpan);
+    block.appendChild(arabicLine);
+
+    // Translation
+    if(state.translation && verse.translations?.length){
+      const tDiv = document.createElement('div');
+      tDiv.className = 'verse-translation';
+      tDiv.innerHTML = verse.translations[0].text; // HTML allowed (footnotes)
+      // Footnote click handler
+      tDiv.addEventListener('click', async e => {
+        const sup = e.target.closest('sup[foot_note]');
+        if(!sup) return;
+        const id = sup.getAttribute('foot_note');
+        try {
+          const r = await fetch(`${API.replace('/content','')}/../content/api/v4/foot_notes/${id}`, {});
+          if(!r.ok) return;
+          const d = await r.json();
+          showFootnote(d?.footNote?.text || d?.foot_note?.text || 'No content');
+        } catch(ex){ showFootnote('Could not load footnote.'); }
+      });
+      block.appendChild(tDiv);
+    }
+
+    container.appendChild(block);
+  });
+}
+
+// ── Word span factory ─────────────────────────────────────────────
+function makeWordSpan(word, cfg, fontsReady){
+  const span = document.createElement('span');
+  const isEnd = word.char_type_name === 'end';
+
+  span.className = 'qword' + (isEnd ? ' end-marker' : '');
+  span.dataset.verseKey = word.verseKey;
+  span.dataset.page = word.page_number;
+  span.dataset.pos = word.position;
+
+  // Store tooltip data
+  if(state.wbw && word.translation){
+    span.dataset.trans = word.translation.text || '';
+    span.dataset.translit = word.transliteration?.text || '';
+    span.dataset.arabic = word.text_qpc_hafs || word.text_uthmani || '';
+  }
+
+  // Verse end markers always use Unicode
+  if(isEnd){
+    span.style.fontFamily = "'UthmanicHafs','Traditional Arabic',serif";
+    span.textContent = word.text_qpc_hafs || word.text_uthmani || '';
+    return span;
+  }
+
+  if(cfg.type === 'qcf' && fontsReady && word.page_number){
+    const ver = state.script === 'qcf_v4' ? 'v4' : 'v2';
+    span.style.fontFamily = `p${word.page_number}-${ver}`;
+    if(ver === 'v4'){
+      span.dataset.v4 = '1';
+      span.style.fontPalette = `--Tajweed${capitalize(state.theme)}`;
+    }
+    // MUST use innerHTML for QCF glyph codes
+    span.innerHTML = word[cfg.glyphField] || '';
+  } else if(cfg.type === 'qcf'){
+    // Fallback while fonts load
+    span.style.fontFamily = "'UthmanicHafs','Traditional Arabic',serif";
+    span.style.opacity = '0.8';
+    span.textContent = word.text_qpc_hafs || '';
+  } else {
+    // Unicode scripts (Uthmani, IndoPak)
+    span.textContent = word[cfg.glyphField] || word[cfg.fallbackField] || '';
+  }
+
+  return span;
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+document.addEventListener('mouseover', e => {
+  const span = e.target.closest('.qword[data-trans]');
+  if(!span || !state.wbw) return;
+  document.getElementById('tt-arabic').textContent = span.dataset.arabic || '';
+  document.getElementById('tt-trans').textContent = span.dataset.trans || '';
+  document.getElementById('tt-translit').textContent = span.dataset.translit || '';
+  positionTooltip(e);
+  tooltip.classList.add('visible');
+});
+document.addEventListener('mousemove', e => {
+  if(tooltip.classList.contains('visible')) positionTooltip(e);
+});
+document.addEventListener('mouseout', e => {
+  if(!e.target.closest('.qword[data-trans]')) tooltip.classList.remove('visible');
+});
+function positionTooltip(e){
+  const tw=220, th=80;
+  let x = e.clientX+14, y = e.clientY-20;
+  if(x+tw > window.innerWidth) x = e.clientX-tw-14;
+  if(y+th > window.innerHeight) y = e.clientY-th-10;
+  tooltip.style.left = x+'px';
+  tooltip.style.top  = y+'px';
+}
+
+// ── Audio ─────────────────────────────────────────────────────────
+async function loadAudio(chapter){
+  if(!state.audio) return;
+  try {
+    // Reciter 1 = Abu Bakr al-Shatri (default)
+    const r = await fetch(`${API}/audio/chapter/1/${chapter}`);
+    const d = await r.json();
+    const url = d?.audio_file?.audio_url;
+    if(url){
+      const bar = document.getElementById('audioBar');
+      document.getElementById('audioPlayer').src = url;
+      document.getElementById('audioLabel').textContent =
+        `Surah ${chapter} · ${d.audio_file.format?.toUpperCase() || 'MP3'}`;
+      bar.style.display = 'flex';
+    }
+  } catch(e){ /* audio is optional */ }
+}
+
+// ── Footnote ──────────────────────────────────────────────────────
+function showFootnote(text){
+  document.getElementById('fnText').innerHTML = text;
+  document.getElementById('fnPopup').classList.add('visible');
+}
+function closeFn(){ document.getElementById('fnPopup').classList.remove('visible'); }
+document.getElementById('fnPopup').addEventListener('click', e => {
+  if(e.target === document.getElementById('fnPopup')) closeFn();
+});
+
+// ── Status ────────────────────────────────────────────────────────
+function setStatus(type, msg){
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + type;
+  document.getElementById('statusText').textContent = msg;
+}
+
+// ── Utility ───────────────────────────────────────────────────────
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+</script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quran Foundation – Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #1a1614;
+      --sand:   #f5efe6;
+      --gold:   #c8922a;
+      --gold-l: #e8b84b;
+      --teal:   #1d5c63;
+      --cream:  #faf6ef;
+      --border: rgba(200,146,42,0.25);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Geometric background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 20%, rgba(29,92,99,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 80%, rgba(200,146,42,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ── Decorative star pattern ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px; right: -120px;
+      width: 480px; height: 480px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35' fill='none' stroke='%23c8922a' stroke-width='0.4' opacity='0.18'/%3E%3Cpolygon points='50,18 58,40 82,40 63,54 70,76 50,63 30,76 37,54 18,40 42,40' fill='none' stroke='%23c8922a' stroke-width='0.3' opacity='0.12'/%3E%3C/svg%3E") no-repeat center / contain;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* ── Layout ── */
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── Left panel ── */
+    .panel-left {
+      background: var(--teal);
+      padding: 64px 56px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-left::before {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -80px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,146,42,0.18) 0%, transparent 70%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 1;
+    }
+
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: var(--gold);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+    }
+
+    .brand-name {
+      font-family: 'Amiri', serif;
+      font-size: 22px;
+      color: #fff;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-text {
+      z-index: 1;
+    }
+
+    .arabic-quote {
+      font-family: 'Amiri', serif;
+      font-size: 42px;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.4;
+      direction: rtl;
+      text-align: right;
+      margin-bottom: 24px;
+    }
+
+    .arabic-ref {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      text-align: right;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .features {
+      z-index: 1;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .features li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+    }
+
+    .features li::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold-l);
+      flex-shrink: 0;
+    }
+
+    /* ── Right panel ── */
+    .panel-right {
+      padding: 64px 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .card-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-family: 'Amiri', serif;
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .card-sub {
+      font-size: 14px;
+      color: #6b6460;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+      display: none;
+      background: #fdf0f0;
+      border: 1px solid #e8b4b4;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #8b2020;
+      margin-bottom: 20px;
+    }
+    .error-banner.visible { display: block; }
+
+    /* ── Scope selector ── */
+    .scope-section {
+      margin-bottom: 28px;
+    }
+
+    .scope-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8a7f78;
+      margin-bottom: 12px;
+    }
+
+    .scope-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .scope-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      font-size: 13px;
+      color: var(--ink);
+      user-select: none;
+    }
+
+    .scope-chip input[type=checkbox] { display: none; }
+
+    .scope-chip .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      border: 1.5px solid #ccc;
+      flex-shrink: 0;
+      transition: background .15s, border-color .15s;
+    }
+
+    .scope-chip.checked {
+      border-color: var(--gold);
+      background: rgba(200,146,42,0.06);
+    }
+    .scope-chip.checked .dot {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .scope-chip.locked {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    /* ── Login button ── */
+    .btn-login {
+      width: 100%;
+      padding: 15px 24px;
+      background: var(--teal);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background .15s, transform .1s;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .btn-login:hover { background: #174950; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+
+    .btn-login svg { opacity: 0.7; }
+
+    .security-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: #9a918c;
+      line-height: 1.5;
+    }
+
+    .security-note svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+      font-size: 12px;
+      color: #c0b8b2;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border);
+    }
+
+    /* ── Flow steps ── */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.06);
+      font-size: 13px;
+      color: #6b6460;
+    }
+
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--sand);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .page { grid-template-columns: 1fr; }
+      .panel-left { display: none; }
+      .panel-right { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Left panel -->
+    <div class="panel-left">
+      <div class="brand">
+        <div class="brand-icon">☽</div>
+        <span class="brand-name">Quran Foundation</span>
+      </div>
+
+      <div class="hero-text">
+        <div class="arabic-quote">﴿ إِنَّ هَـٰذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ ﴾</div>
+        <div class="arabic-ref">Al-Isra 17:9</div>
+      </div>
+
+      <ul class="features">
+        <li>Bookmarks synced across all devices</li>
+        <li>Reading progress and streak tracking</li>
+        <li>Personal collections and annotations</li>
+        <li>Preferences saved to the cloud</li>
+        <li>Single sign-on with Quran.com</li>
+      </ul>
+    </div>
+
+    <!-- Right panel -->
+    <div class="panel-right">
+      <div class="card">
+        <div class="card-eyebrow">User APIs · OAuth2 + PKCE</div>
+        <h1 class="card-title">Sign in to continue</h1>
+        <p class="card-sub">
+          Authenticate with your Quran Foundation account to access
+          bookmarks, collections, reading progress, and preferences.
+        </p>
+
+        <div id="errorBanner" class="error-banner"></div>
+
+        <div class="scope-section">
+          <div class="scope-label">Request access to</div>
+          <div class="scope-grid">
+            <label class="scope-chip checked locked" title="Always required">
+              <input type="checkbox" name="scope" value="openid" checked disabled />
+              <span class="dot"></span> openid
+            </label>
+            <label class="scope-chip checked locked" title="Always required">
+              <input type="checkbox" name="scope" value="offline_access" checked disabled />
+              <span class="dot"></span> offline_access
+            </label>
+            <label class="scope-chip checked" onclick="toggleChip(this)">
+              <input type="checkbox" name="scope" value="bookmark" checked />
+              <span class="dot"></span> bookmark
+            </label>
+            <label class="scope-chip checked" onclick="toggleChip(this)">
+              <input type="checkbox" name="scope" value="collection" checked />
+              <span class="dot"></span> collection
+            </label>
+            <label class="scope-chip checked" onclick="toggleChip(this)">
+              <input type="checkbox" name="scope" value="reading_session" checked />
+              <span class="dot"></span> reading_session
+            </label>
+            <label class="scope-chip checked" onclick="toggleChip(this)">
+              <input type="checkbox" name="scope" value="preference" checked />
+              <span class="dot"></span> preference
+            </label>
+          </div>
+        </div>
+
+        <a id="loginBtn" href="/auth/login" class="btn-login">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+          </svg>
+          Continue with Quran Foundation
+        </a>
+
+        <div class="security-note">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>
+            Secured with Authorization Code + PKCE. Your credentials are never
+            shared with this app — authentication happens on Quran Foundation's
+            servers.
+          </span>
+        </div>
+
+        <div class="divider">how it works</div>
+
+        <div class="flow-steps">
+          <div class="step"><span class="step-num">1</span> PKCE + state + nonce generated client-side</div>
+          <div class="step"><span class="step-num">2</span> Redirect to hosted QF login page</div>
+          <div class="step"><span class="step-num">3</span> Authorization code sent to backend</div>
+          <div class="step"><span class="step-num">4</span> Backend exchanges code (CLIENT_SECRET stays hidden)</div>
+          <div class="step"><span class="step-num">5</span> id_token nonce verified · tokens stored server-side</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Show error from callback redirect
+    const params = new URLSearchParams(location.search);
+    const err = params.get('error');
+    if (err) {
+      const banner = document.getElementById('errorBanner');
+      banner.textContent = 'Authentication error: ' + decodeURIComponent(err).replace(/_/g,' ');
+      banner.classList.add('visible');
+    }
+
+    function toggleChip(el) {
+      if (el.classList.contains('locked')) return;
+      el.classList.toggle('checked');
+      const cb = el.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      updateLoginUrl();
+    }
+
+    function updateLoginUrl() {
+      const checked = Array.from(
+        document.querySelectorAll('input[name=scope]:checked')
+      ).map(cb => cb.value);
+      const scope = checked.join(' ');
+      document.getElementById('loginBtn').href =
+        '/auth/login?scope=' + encodeURIComponent(scope);
+    }
+
+    updateLoginUrl();
+  </script>
+</body>
+</html>

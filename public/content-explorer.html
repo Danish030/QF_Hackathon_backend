@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Content API Explorer – Quran Foundation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#1a1614; --sand:#f5efe6; --gold:#c8922a; --gold-l:#e8b84b;
+      --teal:#1d5c63; --cream:#faf6ef; --border:rgba(0,0,0,0.08);
+      --red:#c0392b; --green:#1a7a4a; --r:12px;
+    }
+    body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh}
+
+    /* nav */
+    nav{background:var(--teal);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .nav-brand{font-family:'Amiri',serif;font-size:20px;color:#fff;display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-links{display:flex;gap:8px}
+    .nav-link{padding:6px 14px;border-radius:8px;font-size:13px;color:rgba(255,255,255,.8);text-decoration:none;background:rgba(255,255,255,.1)}
+    .nav-link:hover{background:rgba(255,255,255,.2)}
+    .nav-link.active{background:rgba(255,255,255,.2);color:#fff}
+
+    /* layout */
+    .layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 58px)}
+
+    /* sidebar */
+    .sidebar{background:#fff;border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 58px)}
+    .sidebar-section{margin-bottom:4px}
+    .sidebar-heading{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;padding:12px 20px 4px}
+    .sidebar-btn{width:100%;text-align:left;padding:8px 20px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:#5a5250;display:flex;align-items:center;gap:8px;transition:background .1s,color .1s}
+    .sidebar-btn:hover{background:#f5efe6;color:var(--ink)}
+    .sidebar-btn.active{background:rgba(200,146,42,.1);color:var(--gold);font-weight:500}
+    .sidebar-btn .method{font-size:10px;font-weight:700;letter-spacing:.04em;background:rgba(29,92,99,.12);color:var(--teal);padding:2px 6px;border-radius:4px}
+
+    /* main */
+    .main{padding:32px;max-width:900px}
+    .panel-title{font-family:'Amiri',serif;font-size:28px;font-weight:700;margin-bottom:4px}
+    .panel-desc{font-size:14px;color:#7a726c;line-height:1.6;margin-bottom:24px}
+
+    /* param builder */
+    .param-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    .param-group{display:flex;flex-direction:column;gap:4px}
+    .param-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8a7f78}
+    .param-input{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:#fff;outline:none;transition:border-color .15s}
+    .param-input:focus{border-color:var(--gold)}
+    select.param-input{cursor:pointer}
+
+    /* url preview */
+    .url-preview{background:#f0f4f5;border:1px solid rgba(29,92,99,.2);border-radius:8px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--teal);margin-bottom:16px;word-break:break-all}
+    .url-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8a9fa0;margin-bottom:4px}
+
+    /* buttons */
+    .btn-row{display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+    .btn{padding:10px 20px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s,transform .1s}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--teal);color:#fff}
+    .btn-primary:hover{background:#174950}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .btn-secondary{background:rgba(29,92,99,.1);color:var(--teal)}
+    .btn-secondary:hover{background:rgba(29,92,99,.18)}
+
+    /* spinner */
+    .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+    .btn.loading .spinner{display:inline-block}
+    .btn.loading .btn-label{opacity:.7}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* response */
+    .response-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .response-title{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8a7f78}
+    .status-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
+    .status-ok{background:rgba(26,122,74,.12);color:var(--green)}
+    .status-err{background:rgba(192,57,43,.12);color:var(--red)}
+
+    .response-box{background:#1a1614;border-radius:10px;padding:16px;font-family:'DM Mono',monospace;font-size:12px;color:#e0d8d0;overflow:auto;max-height:460px;min-height:100px;white-space:pre;line-height:1.6}
+    .response-box.empty{color:#5a504a;font-style:italic}
+
+    /* audio player */
+    .audio-section{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;display:none}
+    .audio-section.visible{display:block}
+    .audio-title{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--teal)}
+    audio{width:100%;height:36px}
+
+    /* verse list */
+    .verse-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+    .verse-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+    .verse-key{font-size:11px;font-weight:600;color:var(--gold);letter-spacing:.06em;margin-bottom:6px}
+    .verse-arabic{font-family:'Amiri',serif;font-size:26px;direction:rtl;text-align:right;line-height:1.8;margin-bottom:8px;color:var(--ink)}
+    .verse-translation{font-size:13px;color:#5a5250;line-height:1.7}
+
+    /* chapter list */
+    .chapter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+    .chapter-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+    .chapter-card:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(200,146,42,.12)}
+    .chapter-num{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:2px}
+    .chapter-name{font-weight:600;font-size:14px}
+    .chapter-arabic{font-family:'Amiri',serif;font-size:18px;direction:rtl;text-align:right;color:var(--teal)}
+    .chapter-meta{font-size:11px;color:#9a918c;margin-top:4px}
+
+    @media(max-width:768px){
+      .layout{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .param-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">☽ Quran Foundation</a>
+  <div class="nav-links">
+    <a class="nav-link" href="/dashboard">User APIs</a>
+    <a class="nav-link active" href="/content-explorer.html">Content APIs</a>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Chapters</div>
+      <button class="sidebar-btn active" data-panel="chapters">
+        <span class="method">GET</span> List Chapters
+      </button>
+      <button class="sidebar-btn" data-panel="chapter-single">
+        <span class="method">GET</span> Get Chapter
+      </button>
+      <button class="sidebar-btn" data-panel="chapter-info">
+        <span class="method">GET</span> Chapter Info
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Verses</div>
+      <button class="sidebar-btn" data-panel="verses-chapter">
+        <span class="method">GET</span> By Chapter
+      </button>
+      <button class="sidebar-btn" data-panel="verses-page">
+        <span class="method">GET</span> By Page
+      </button>
+      <button class="sidebar-btn" data-panel="verses-juz">
+        <span class="method">GET</span> By Juz
+      </button>
+      <button class="sidebar-btn" data-panel="verses-key">
+        <span class="method">GET</span> By Verse Key
+      </button>
+      <button class="sidebar-btn" data-panel="verses-random">
+        <span class="method">GET</span> Random Verse
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Audio</div>
+      <button class="sidebar-btn" data-panel="audio-reciters">
+        <span class="method">GET</span> Chapter Reciters
+      </button>
+      <button class="sidebar-btn" data-panel="audio-chapter">
+        <span class="method">GET</span> Chapter Audio
+      </button>
+      <button class="sidebar-btn" data-panel="audio-ayahs">
+        <span class="method">GET</span> Ayah Recitations
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Resources</div>
+      <button class="sidebar-btn" data-panel="translations">
+        <span class="method">GET</span> Translations
+      </button>
+      <button class="sidebar-btn" data-panel="tafsirs">
+        <span class="method">GET</span> Tafsirs
+      </button>
+      <button class="sidebar-btn" data-panel="juzs">
+        <span class="method">GET</span> Juz List
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main" id="main">
+    <!-- injected by JS -->
+  </main>
+
+</div>
+
+<script>
+// ── Panel definitions ─────────────────────────────────────────────
+const PANELS = {
+  chapters: {
+    title: 'List All Chapters',
+    desc: 'Returns all 114 Surahs with Arabic name, translated name, revelation place, verse count, and page range.',
+    params: [
+      { key: 'language', label: 'Language', type: 'select', options: ['en','ar','ur','fr','de','tr','id','bn'], default: 'en' }
+    ],
+    buildUrl: p => `/api/content/chapters?language=${p.language||'en'}`,
+    render: renderChapterGrid,
+  },
+  'chapter-single': {
+    title: 'Get Chapter',
+    desc: 'Fetch metadata for a single Surah by its number (1–114).',
+    params: [
+      { key: 'id', label: 'Chapter Number', type: 'number', default: '1', min: 1, max: 114 },
+      { key: 'language', label: 'Language', type: 'select', options: ['en','ar','ur','fr','de','tr','id','bn'], default: 'en' }
+    ],
+    buildUrl: p => `/api/content/chapters/${p.id||1}?language=${p.language||'en'}`,
+  },
+  'chapter-info': {
+    title: 'Get Chapter Info',
+    desc: 'Fetches extended info about a chapter — background, themes, and introductory text.',
+    params: [
+      { key: 'id', label: 'Chapter Number', type: 'number', default: '1', min: 1, max: 114 },
+      { key: 'language', label: 'Language', type: 'select', options: ['en','ur','fr','tr','id','bn'], default: 'en' }
+    ],
+    buildUrl: p => `/api/content/chapters/${p.id||1}/info?language=${p.language||'en'}`,
+  },
+  'verses-chapter': {
+    title: 'Verses by Chapter',
+    desc: 'Get paginated verses for a Surah. Include translations and word-by-word data as needed.',
+    params: [
+      { key: 'chapterNumber', label: 'Chapter (1–114)', type: 'number', default: '1', min: 1, max: 114 },
+      { key: 'translations', label: 'Translation IDs', type: 'text', default: '131', placeholder: 'e.g. 131,85' },
+      { key: 'words', label: 'Word-by-word', type: 'select', options: ['false','true'], default: 'false' },
+      { key: 'fields', label: 'Extra Fields', type: 'text', default: 'text_uthmani', placeholder: 'text_uthmani,text_imlaei' },
+      { key: 'per_page', label: 'Per Page (max 50)', type: 'number', default: '10', min: 1, max: 50 },
+      { key: 'page', label: 'Page', type: 'number', default: '1', min: 1 },
+    ],
+    buildUrl: p => {
+      const q = new URLSearchParams();
+      if (p.translations) q.set('translations', p.translations);
+      if (p.words && p.words !== 'false') q.set('words', p.words);
+      if (p.fields) q.set('fields', p.fields);
+      if (p.per_page) q.set('per_page', p.per_page);
+      if (p.page) q.set('page', p.page);
+      return `/api/content/verses/by_chapter/${p.chapterNumber||1}?${q}`;
+    },
+    render: renderVerseCards,
+  },
+  'verses-page': {
+    title: 'Verses by Page',
+    desc: 'Get all verses on a specific Madani Mushaf page (1–604).',
+    params: [
+      { key: 'pageNumber', label: 'Page Number (1–604)', type: 'number', default: '1', min: 1, max: 604 },
+      { key: 'translations', label: 'Translation IDs', type: 'text', default: '131' },
+      { key: 'fields', label: 'Extra Fields', type: 'text', default: 'text_uthmani' },
+    ],
+    buildUrl: p => {
+      const q = new URLSearchParams();
+      if (p.translations) q.set('translations', p.translations);
+      if (p.fields) q.set('fields', p.fields);
+      return `/api/content/verses/by_page/${p.pageNumber||1}?${q}`;
+    },
+    render: renderVerseCards,
+  },
+  'verses-juz': {
+    title: 'Verses by Juz',
+    desc: 'Get all verses in a Juz (1–30).',
+    params: [
+      { key: 'juzNumber', label: 'Juz Number (1–30)', type: 'number', default: '1', min: 1, max: 30 },
+      { key: 'translations', label: 'Translation IDs', type: 'text', default: '131' },
+      { key: 'fields', label: 'Extra Fields', type: 'text', default: 'text_uthmani' },
+      { key: 'per_page', label: 'Per Page', type: 'number', default: '10', min: 1, max: 50 },
+    ],
+    buildUrl: p => {
+      const q = new URLSearchParams();
+      if (p.translations) q.set('translations', p.translations);
+      if (p.fields) q.set('fields', p.fields);
+      if (p.per_page) q.set('per_page', p.per_page);
+      return `/api/content/verses/by_juz/${p.juzNumber||1}?${q}`;
+    },
+    render: renderVerseCards,
+  },
+  'verses-key': {
+    title: 'Verse by Key',
+    desc: 'Fetch a specific verse by its key (chapter:verse). e.g. 2:255 is Ayat al-Kursi.',
+    params: [
+      { key: 'verseKey', label: 'Verse Key', type: 'text', default: '1:1', placeholder: 'e.g. 2:255' },
+      { key: 'translations', label: 'Translation IDs', type: 'text', default: '131' },
+      { key: 'fields', label: 'Extra Fields', type: 'text', default: 'text_uthmani' },
+    ],
+    buildUrl: p => {
+      const q = new URLSearchParams();
+      if (p.translations) q.set('translations', p.translations);
+      if (p.fields) q.set('fields', p.fields);
+      return `/api/content/verses/by_key/${encodeURIComponent(p.verseKey||'1:1')}?${q}`;
+    },
+  },
+  'verses-random': {
+    title: 'Random Verse',
+    desc: 'Get a random ayah — useful for "Verse of the Day" features.',
+    params: [
+      { key: 'translations', label: 'Translation IDs', type: 'text', default: '131' },
+      { key: 'fields', label: 'Extra Fields', type: 'text', default: 'text_uthmani' },
+    ],
+    buildUrl: p => {
+      const q = new URLSearchParams();
+      if (p.translations) q.set('translations', p.translations);
+      if (p.fields) q.set('fields', p.fields);
+      return `/api/content/verses/random?${q}`;
+    },
+    render: renderVerseCards,
+  },
+  'audio-reciters': {
+    title: 'List Chapter Reciters',
+    desc: 'Returns all reciters that have full Surah-level audio files. Use the reciter ID with the Chapter Audio endpoint.',
+    params: [
+      { key: 'language', label: 'Language', type: 'select', options: ['en','ar'], default: 'en' }
+    ],
+    buildUrl: p => `/api/content/audio/chapter-reciters?language=${p.language||'en'}`,
+  },
+  'audio-chapter': {
+    title: 'Chapter Audio (Full Surah MP3)',
+    desc: 'Get the direct audio_url for a complete Surah recitation. Optionally include verse timestamps.',
+    params: [
+      { key: 'reciterId', label: 'Reciter ID', type: 'number', default: '1', min: 1 },
+      { key: 'chapterNumber', label: 'Chapter (1–114)', type: 'number', default: '1', min: 1, max: 114 },
+      { key: 'segments', label: 'Include Segments', type: 'select', options: ['false','true'], default: 'false' },
+    ],
+    buildUrl: p => `/api/content/audio/chapter/${p.reciterId||1}/${p.chapterNumber||1}?segments=${p.segments||'false'}`,
+    render: renderAudioPlayer,
+  },
+  'audio-ayahs': {
+    title: 'Ayah Recitations (Per-Verse Audio)',
+    desc: 'Get individual audio URLs for each ayah in a chapter. Use listRecitations to find recitation IDs.',
+    params: [
+      { key: 'recitationId', label: 'Recitation ID', type: 'number', default: '7', min: 1 },
+      { key: 'chapterNumber', label: 'Chapter (1–114)', type: 'number', default: '1', min: 1, max: 114 },
+    ],
+    buildUrl: p => `/api/content/audio/ayahs/${p.recitationId||7}/chapter/${p.chapterNumber||1}`,
+  },
+  translations: {
+    title: 'List Translations',
+    desc: 'Returns all available translation IDs and their names/languages. Pass these IDs to verse endpoints.',
+    params: [
+      { key: 'language', label: 'Language', type: 'select', options: ['en','ar','ur','fr','tr','id','bn'], default: 'en' }
+    ],
+    buildUrl: p => `/api/content/resources/translations?language=${p.language||'en'}`,
+  },
+  tafsirs: {
+    title: 'List Tafsirs',
+    desc: 'Returns all available tafsir IDs and their names/languages. Pass these IDs to verse endpoints.',
+    params: [
+      { key: 'language', label: 'Language', type: 'select', options: ['en','ar','ur','bn','tr'], default: 'en' }
+    ],
+    buildUrl: p => `/api/content/resources/tafsirs?language=${p.language||'en'}`,
+  },
+  juzs: {
+    title: 'List Juz',
+    desc: 'Returns all 30 Juz with their first verse key and verse mapping.',
+    params: [],
+    buildUrl: () => `/api/content/resources/juzs`,
+  },
+};
+
+// ── State ──────────────────────────────────────────────────────────
+let currentPanel = 'chapters';
+let currentParams = {};
+
+// ── Sidebar click ──────────────────────────────────────────────────
+document.querySelectorAll('.sidebar-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    switchPanel(btn.dataset.panel);
+  });
+});
+
+function switchPanel(panelKey) {
+  currentPanel = panelKey;
+  currentParams = {};
+  renderPanel();
+}
+
+// ── Render panel ───────────────────────────────────────────────────
+function renderPanel() {
+  const panel = PANELS[currentPanel];
+  if (!panel) return;
+
+  // Seed defaults
+  panel.params.forEach(p => { currentParams[p.key] = p.default || ''; });
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <h1 class="panel-title">${panel.title}</h1>
+    <p class="panel-desc">${panel.desc}</p>
+
+    ${panel.params.length ? `
+    <div class="param-grid">
+      ${panel.params.map(p => `
+        <div class="param-group">
+          <label class="param-label" for="p-${p.key}">${p.label}</label>
+          ${p.type === 'select'
+            ? `<select class="param-input" id="p-${p.key}" data-key="${p.key}">
+                ${(p.options||[]).map(o => `<option value="${o}" ${o==p.default?'selected':''}>${o}</option>`).join('')}
+               </select>`
+            : `<input class="param-input" id="p-${p.key}" data-key="${p.key}"
+                 type="${p.type||'text'}" value="${p.default||''}"
+                 placeholder="${p.placeholder||''}"
+                 ${p.min!==undefined?`min="${p.min}"`:''}
+                 ${p.max!==undefined?`max="${p.max}"`:''}
+               />`
+          }
+        </div>`).join('')}
+    </div>` : ''}
+
+    <div>
+      <div class="url-label">Request URL</div>
+      <div class="url-preview" id="urlPreview">${panel.buildUrl(currentParams)}</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="fetchBtn" onclick="doFetch()">
+        <div class="spinner"></div>
+        <span class="btn-label">Send Request</span>
+      </button>
+    </div>
+
+    <div id="audioSection" class="audio-section">
+      <div class="audio-title">🔊 Audio Player</div>
+      <audio id="audioPlayer" controls preload="none"></audio>
+    </div>
+
+    <div id="richOutput"></div>
+
+    <div class="response-header">
+      <span class="response-title">Raw JSON Response</span>
+      <span id="statusBadge"></span>
+    </div>
+    <pre class="response-box empty" id="responseBox">Hit "Send Request" to see the response…</pre>
+  `;
+
+  // Bind input changes
+  main.querySelectorAll('.param-input').forEach(el => {
+    el.addEventListener('input', () => {
+      currentParams[el.dataset.key] = el.value;
+      document.getElementById('urlPreview').textContent = panel.buildUrl(currentParams);
+    });
+  });
+}
+
+// ── Fetch ──────────────────────────────────────────────────────────
+async function doFetch() {
+  const panel = PANELS[currentPanel];
+  const btn = document.getElementById('fetchBtn');
+  const box = document.getElementById('responseBox');
+  const badge = document.getElementById('statusBadge');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  box.className = 'response-box';
+  box.textContent = 'Loading…';
+  badge.textContent = '';
+  document.getElementById('audioSection').classList.remove('visible');
+  document.getElementById('richOutput').innerHTML = '';
+
+  const url = panel.buildUrl(currentParams);
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    badge.className = `status-badge ${res.ok ? 'status-ok' : 'status-err'}`;
+    badge.textContent = res.status + (res.ok ? ' OK' : ' Error');
+
+    box.className = 'response-box';
+    box.textContent = JSON.stringify(data, null, 2);
+
+    // Rich render if panel defines one
+    if (res.ok && panel.render) {
+      panel.render(data, currentParams);
+    }
+  } catch (err) {
+    badge.className = 'status-badge status-err';
+    badge.textContent = 'Network Error';
+    box.className = 'response-box';
+    box.textContent = String(err);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ── Rich renderers ─────────────────────────────────────────────────
+function renderChapterGrid(data) {
+  const chapters = data.chapters || [];
+  const out = document.getElementById('richOutput');
+  out.innerHTML = `
+    <div class="chapter-grid">
+      ${chapters.map(c => `
+        <div class="chapter-card" onclick="loadChapterVerses(${c.id})">
+          <div class="chapter-num">Surah ${c.id}</div>
+          <div class="chapter-name">${c.name_simple}</div>
+          <div class="chapter-arabic">${c.name_arabic}</div>
+          <div class="chapter-meta">
+            ${c.translated_name?.name} · ${c.verses_count} verses · ${c.revelation_place}
+          </div>
+        </div>`).join('')}
+    </div>
+    <p style="font-size:12px;color:#aaa;margin-top:4px">Click a chapter to view its verses.</p>
+  `;
+}
+
+function loadChapterVerses(id) {
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-panel="verses-chapter"]').classList.add('active');
+  currentPanel = 'verses-chapter';
+  currentParams = {};
+  PANELS['verses-chapter'].params.forEach(p => { currentParams[p.key] = p.default || ''; });
+  currentParams.chapterNumber = String(id);
+  renderPanel();
+  document.getElementById('p-chapterNumber').value = id;
+  document.getElementById('urlPreview').textContent = PANELS['verses-chapter'].buildUrl(currentParams);
+  doFetch();
+}
+
+function renderVerseCards(data) {
+  const verses = data.verses || (data.verse ? [data.verse] : []);
+  if (!verses.length) return;
+  const out = document.getElementById('richOutput');
+  out.innerHTML = `
+    <div class="verse-list">
+      ${verses.map(v => {
+        const trans = (v.translations || []).map(t => t.text).join(' / ');
+        return `
+          <div class="verse-card">
+            <div class="verse-key">Verse ${v.verse_key}</div>
+            ${v.text_uthmani ? `<div class="verse-arabic">${v.text_uthmani}</div>` : ''}
+            ${trans ? `<div class="verse-translation">${trans}</div>` : ''}
+          </div>`;
+      }).join('')}
+    </div>
+    ${data.pagination ? `<p style="font-size:12px;color:#aaa">
+      Page ${data.pagination.current_page} of ${data.pagination.total_pages||'?'} · ${data.pagination.total_records||''} verses
+    </p>` : ''}
+  `;
+}
+
+function renderAudioPlayer(data) {
+  const af = data.audio_file;
+  if (!af?.audio_url) return;
+  const section = document.getElementById('audioSection');
+  const player = document.getElementById('audioPlayer');
+  player.src = af.audio_url;
+  section.querySelector('.audio-title').textContent =
+    `🔊 Chapter ${af.chapter_id} · ${af.format?.toUpperCase()} · ${(af.file_size/1024/1024).toFixed(1)} MB`;
+  section.classList.add('visible');
+}
+
+// ── Initial render ─────────────────────────────────────────────────
+renderPanel();
+</script>
+</body>
+</html>
