@@ -15,6 +15,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cookieSession = require("cookie-session");
+const cors = require("cors");
 const path = require("path");
 
 // Validate credentials at startup – fail fast.
@@ -22,8 +23,8 @@ const { getQfOAuthConfig } = require("./config/qfOAuthConfig");
 const config = getQfOAuthConfig();
 console.log(
   `[boot] QF OAuth2 ready | env=${config.env} | ` +
-    `clientType=${config.isConfidential ? "confidential" : "public"} | ` +
-    `auth=${config.authBaseUrl}`
+  `clientType=${config.isConfidential ? "confidential" : "public"} | ` +
+  `auth=${config.authBaseUrl}`
 );
 
 const authRoutes = require("./auth/authRoutes");
@@ -56,6 +57,15 @@ app.use(
     sameSite: "lax",
   })
 );
+
+// ── CORS ─────────────────────────────────────────────────────────
+app.use(
+  cors({
+    origin: "https://hifz-app-five.vercel.app",
+    credentials: true,
+  })
+);
+
 
 // ── Static files ──────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../public")));
