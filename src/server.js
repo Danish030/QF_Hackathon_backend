@@ -50,13 +50,15 @@ const IS_PROD = process.env.NODE_ENV === "production";
 app.use(
   cookieSession({
     name: "qf_session",
-    secret: process.env.SESSION_SECRET || "replace-me-with-a-long-random-string",
+    secret: process.env.SESSION_SECRET,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
     secure: IS_PROD,
     sameSite: IS_PROD ? "none" : "lax",
   })
 );
+
+console.log(`[boot] Session Cookie Settings: secure=${IS_PROD} | sameSite=${IS_PROD ? "none" : "lax"}`);
 
 // ── CORS ─────────────────────────────────────────────────────────
 app.use(
@@ -66,6 +68,7 @@ app.use(
   })
 );
 
+console.log(`[boot] CORS origin: ${process.env.FRONTEND_BASE_URL || "https://hifz-app-five.vercel.app"}`);
 
 // ── Static files ──────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../public")));
