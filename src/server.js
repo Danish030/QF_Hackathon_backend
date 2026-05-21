@@ -54,14 +54,14 @@ app.use(
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
     secure: IS_PROD,
-    sameSite: "lax",
+    sameSite: IS_PROD ? "none" : "lax",
   })
 );
 
 // ── CORS ─────────────────────────────────────────────────────────
 app.use(
   cors({
-    origin: "https://hifz-app-five.vercel.app",
+    origin: process.env.FRONTEND_BASE_URL || "https://hifz-app-five.vercel.app",
     credentials: true,
   })
 );
