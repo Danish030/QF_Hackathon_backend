@@ -46,6 +46,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === "production";
 
+// Validate SESSION_SECRET at startup
+if (!process.env.SESSION_SECRET) {
+  console.error("[boot] ERROR: SESSION_SECRET is not set in environment variables.");
+  console.error("[boot] Session persistence will fail. Exiting.");
+  process.exit(1);
+}
+console.log("[boot] SESSION_SECRET is configured.");
+
 // ── Session (httpOnly cookie, server-side token storage) ──────────
 app.use(
   cookieSession({

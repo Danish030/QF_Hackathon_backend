@@ -91,6 +91,9 @@ router.get("/login", (req, res) => {
     redirectUri: pkce.redirectUri,
   };
 
+  console.log(`[auth/login] Session set with PKCE state: ${pkce.state.substring(0, 8)}...`);
+  console.log(`[auth/login] Session ID: ${req.sessionID || "no session ID"}`);
+
   res.redirect(url);
 });
 
@@ -100,6 +103,11 @@ router.get("/login", (req, res) => {
 // ─────────────────────────────────────────────────────────────────
 router.get("/callback", async (req, res) => {
   const { code, state, error, error_description } = req.query;
+
+  console.log(`[auth/callback] Received callback: code=${code?.substring(0, 10)}... | state=${state?.substring(0, 8)}...`);
+  console.log(`[auth/callback] Session ID: ${req.sessionID || "no session ID"}`);
+  console.log(`[auth/callback] req.session exists: ${!!req.session}`);
+  console.log(`[auth/callback] req.session.qf_pkce exists: ${!!req.session?.qf_pkce}`);
 
   // Handle user-denied or authorization error.
   if (error) {
@@ -113,6 +121,7 @@ router.get("/callback", async (req, res) => {
 
   const stored = req.session.qf_pkce;
   if (!stored) {
+    console.error("[auth/callback] PKCE session not found. Session may not have persisted across redirect.");
     return res.status(400).send("No PKCE session found. Please start login again.");
   }
 
