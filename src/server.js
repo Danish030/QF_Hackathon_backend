@@ -54,11 +54,11 @@ app.use(
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
     secure: IS_PROD,
-    sameSite: IS_PROD ? "none" : "lax",
+    sameSite: IS_PROD ? "lax" : "lax", // Use 'lax' for cross-site callback flow
   })
 );
 
-console.log(`[boot] Session Cookie Settings: secure=${IS_PROD} | sameSite=${IS_PROD ? "none" : "lax"}`);
+console.log(`[boot] Session Cookie Settings: secure=${IS_PROD} | sameSite=lax (cross-site callback compatible)`);
 
 // ── CORS ─────────────────────────────────────────────────────────
 app.use(
